@@ -1,0 +1,84 @@
+#--------------------------------------------------------|
+#                  KUBERNETES PROMETHEUS                 |
+#--------------------------------------------------------'
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-dep
+  namespace: des
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  template:
+    metadata:
+      labels:
+        environment: des
+        app.kubernetes.io/name: prometheus
+        app.kubernetes.io/component: prometheus
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        imagePullPolicy: Always
+        command:
+          - sh
+          - "-c"
+          - |
+            /bin/bash <<'EOF'
+
+            echo -e "** Hello from PROMETHEUS...\n"
+            tail -f /dev/null
+
+            EOF
+        resources:
+          requests:
+            cpu: 200m
+            memory: 64Mi
+          limits:
+            cpu: 600m
+            memory: 512Mi
+        startupProbe:
+          httpGet:
+            path: /-/healthy # https://prometheus.io/docs/alerting/latest/management_api/
+            port: 9090
+            scheme: HTTP
+          failureThreshold: 18
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /-/ready
+            port: 9090
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 30
+        livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+        ports:
+        - containerPort: 9090
+          name: http
+        volumeMounts:
+          - mountPath: /etc/prometheus/
+            name: prometheus-dir
+      volumes:
+        - name: prometheus-dir
+          configMap:
+            name: prometheus-dir
+            items:
+            - key: prometheus.yml
+              path: prometheus.yml
+      terminationGracePeriodSeconds: 60

@@ -1,0 +1,85 @@
+#--------------------------------------------------------|
+#                KUBERNETES EVMOS DEVNET2                |
+#--------------------------------------------------------'
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evmos-devnet2-dep
+  namespace: des
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: evmos-devnet2
+  template:
+    metadata:
+      labels:
+        environment: des
+        app.kubernetes.io/name: evmos-devnet2
+        app.kubernetes.io/component: evmosd
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: evmos-devnet2
+        image: evmos-devnet2
+        imagePullPolicy: Always
+        command:
+          - sh
+          - "-c"
+          - |
+            /bin/bash <<'EOF'
+
+            echo -e "** Hello from EVMOS DEVNET2...\n"
+            tail -f /dev/null
+
+            EOF
+        resources:
+          requests:
+            cpu: 200m
+            memory: 64Mi
+          limits:
+            cpu: 600m
+            memory: 512Mi
+        startupProbe:
+          httpGet:
+            path: /startup # just an example...
+            port: 26657
+            scheme: HTTP
+          failureThreshold: 18
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /status
+            port: 26657
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 30
+        livenessProbe:
+            httpGet:
+              path: /liveness # just an example...
+              port: 26657
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+        ports:
+        - containerPort: 26657
+          name: health-check
+        - containerPort: 8545
+          name: http
+        - containerPort: 26660 # can be 26660 without conflict now since it does not run on localhost anymore
+          name: http
+      volumes:
+        - name: prometheus_data
+          emptyDir: { }
+        - name: grafana_data
+          emptyDir: { }
+        - name: phlare_data
+          emptyDir: { }
+      terminationGracePeriodSeconds: 60

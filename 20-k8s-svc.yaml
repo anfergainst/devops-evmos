@@ -1,0 +1,35 @@
+#--------------------------------------------------------|
+#            KUBERNETES SERVICE - LOADBALANCER           |
+#--------------------------------------------------------'
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: evmos-prometheus-alb
+  namespace: des
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
+  selector:
+    environment: des
+    app.kubernetes.io/name: prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: evmos-grafana-alb
+  namespace: des
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  selector:
+    environment: des
+    app.kubernetes.io/name: grafana

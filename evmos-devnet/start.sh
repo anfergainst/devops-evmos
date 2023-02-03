@@ -44,3 +44,5 @@ echo "starting evmos node $i in background ..."
 --keyring-backend test --home $DATA_DIR \
 >$DATA_DIR/node.log $EXTRA_FLAGS
 
+echo "creating symbolic link to evmosd"
+ln -s /evmosd /usr/bin/evmosd

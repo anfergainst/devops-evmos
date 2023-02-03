@@ -1,0 +1,96 @@
+#--------------------------------------------------------|
+#                    KUBERNETES GRAFANA                  |
+#--------------------------------------------------------'
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-dep
+  namespace: des
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  template:
+    metadata:
+      labels:
+        environment: des
+        app.kubernetes.io/name: grafana
+        app.kubernetes.io/component: grafana
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        imagePullPolicy: Always
+        command:
+          - sh
+          - "-c"
+          - |
+            /bin/bash <<'EOF'
+
+            echo -e "** Hello from GRAFANA...\n"
+            tail -f /dev/null
+
+            EOF
+        resources:
+          requests:
+            cpu: 200m
+            memory: 64Mi
+          limits:
+            cpu: 600m
+            memory: 512Mi
+        startupProbe:
+          httpGet:
+            path: /startup # just an example...
+            port: 3000
+            scheme: HTTP
+          failureThreshold: 18
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /status
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 30
+        livenessProbe:
+            httpGet:
+              path: /api/health # https://grafana.com/docs/grafana/v8.4/http_api/other/#returns-health-information-about-grafana
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 5
+        ports:
+        - containerPort: 3000
+          name: http
+        volumeMounts:
+          - mountPath: /etc/grafana/
+            name: grafana-dir
+          - mountPath: /var/lib/grafana/dashboards/
+            name: grafana-dash
+      volumes:
+        - name: grafana-dir
+          configMap:
+            name: grafana-dir
+            items:
+            - key: grafana.ini
+              path: grafana.ini
+            - key: datasource.yaml
+              path: /provisioning/datasources/datasource.yaml
+            - key: main.yaml
+              path: /provisioning/dashboards/main.yaml
+        - name: grafana-dash
+          configMap:
+            name: grafana-dash
+            items:
+            - key: dash01.json
+              path: dash01.json
+      terminationGracePeriodSeconds: 60

@@ -8,6 +8,7 @@ volumes:
 services:
   evmos-devnet1:
     image: evmos-devnet1
+    container_name: evmos-devnet1
     build:
       context: ./evmos-devnet
       args:
@@ -24,6 +25,7 @@ services:
 
   evmos-devnet2:
     image: evmos-devnet2
+    container_name: evmos-devnet2
     build:
       context: ./evmos-devnet
       args:
@@ -38,3 +40,36 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+            - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 8090:9090
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+    #   interval: 15s
+    #   timeout: 10s
+    #   retries: 10
+    #   start_period: 10s
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+            - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+            - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml
+            - ./grafana/main.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+            - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - 3000:3000
+    links:
+            - prometheus
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+    #   interval: 15s
+    #   timeout: 10s
+    #   retries: 10
+    #   start_period: 10s
