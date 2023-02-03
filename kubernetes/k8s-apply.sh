@@ -35,8 +35,9 @@ function set_requirements() {
 ####
 
 function build() {
-    docker build . -t evmos-devnet1 --build-arg commit_hash=tags/v9.1.0
-    docker build . -t evmos-devnet2 --build-arg commit_hash=tags/v10.0.0-rc2 --build-arg extra_flags=--metrics
+# ToDo
+#    docker build . -t evmos-devnet1 --build-arg commit_hash=tags/v9.1.0
+#    docker build . -t evmos-devnet2 --build-arg commit_hash=tags/v10.0.0-rc2 --build-arg extra_flags=--metrics
 }
 
 function apply() {
